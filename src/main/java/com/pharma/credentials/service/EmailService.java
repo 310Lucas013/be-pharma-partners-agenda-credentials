@@ -1,6 +1,7 @@
 package com.pharma.credentials.service;
 
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.mail.*;
@@ -9,8 +10,11 @@ import java.util.Properties;
 
 @Service
 public class EmailService {
-    private static final String username="fhict.supp0rt@gmail.com";
-    private static final String password = "FontysSupport404";
+    @Value("${email.login}")
+    private static String username;
+
+    @Value("${email.password}")
+    private static String password;
 
     public boolean sendEmail(String emailid, String twoFaCode) throws AddressException, MessagingException {
         Properties props = new Properties();
