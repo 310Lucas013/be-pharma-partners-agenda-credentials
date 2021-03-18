@@ -10,11 +10,11 @@ import java.util.Properties;
 
 @Service
 public class EmailService {
-    @Value("${email.login}")
-    private static String username;
+    @Value("${email.username}")
+    private String username;
 
-    @Value("${email.password}")
-    private static String password;
+    @Value("${email.pwd}")
+    private String password;
 
     public boolean sendEmail(String emailid, String twoFaCode) throws AddressException, MessagingException {
         Properties props = new Properties();
