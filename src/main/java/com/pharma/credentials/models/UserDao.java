@@ -17,6 +17,13 @@ public class UserDao {
     @JsonIgnore
     private String password;
 
+    @Column
+    @JsonIgnore
+    private String secret;
+
+    @Column
+    private boolean isAuthenticated;
+
     @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JoinTable(name = "USER_ROLES",
             joinColumns = {
@@ -48,6 +55,22 @@ public class UserDao {
 
     public void setRoles(Set<RoleDao> roles) {
         this.roles = roles;
+    }
+
+    public String getSecret() {
+        return secret;
+    }
+
+    public void setSecret(String secret) {
+        this.secret = secret;
+    }
+
+    public boolean isAuthenticated() {
+        return isAuthenticated;
+    }
+
+    public void setAuthenticated(boolean authenticated) {
+        isAuthenticated = authenticated;
     }
 
     @Override
