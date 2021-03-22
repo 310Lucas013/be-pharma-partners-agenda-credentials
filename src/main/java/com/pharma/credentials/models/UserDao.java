@@ -3,6 +3,7 @@ package com.pharma.credentials.models;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import javax.persistence.*;
+import java.util.Set;
 
 @Entity
 @Table
@@ -15,6 +16,15 @@ public class UserDao {
     @Column
     @JsonIgnore
     private String password;
+
+    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @JoinTable(name = "USER_ROLES",
+            joinColumns = {
+                    @JoinColumn(name = "USER_ID")
+            },
+            inverseJoinColumns = {
+                    @JoinColumn(name = "ROLE_ID") })
+    private Set<RoleDao> roles;
 
     public String getUsername() {
         return username;
@@ -30,5 +40,23 @@ public class UserDao {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public Set<RoleDao> getRoles() {
+        return roles;
+    }
+
+    public void setRoles(Set<RoleDao> roles) {
+        this.roles = roles;
+    }
+
+    @Override
+    public String toString() {
+        return "UserDao{" +
+                "id=" + id +
+                ", username='" + username + '\'' +
+                ", password='" + password + '\'' +
+                ", roles=" + roles +
+                '}';
     }
 }
