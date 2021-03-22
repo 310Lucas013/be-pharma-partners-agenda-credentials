@@ -1,5 +1,6 @@
 package com.pharma.credentials.service;
 
+import com.pharma.credentials.exeptions.UsernameExistsException;
 import com.pharma.credentials.models.UserDao;
 import com.pharma.credentials.models.UserDto;
 import com.pharma.credentials.repository.UserRepository;
@@ -30,10 +31,19 @@ public class JwtUserDetailsService implements UserDetailsService {
                 new ArrayList<>());
     }
 
-    public UserDao save(UserDto user) {
+    public UserDao save(UserDto user) throws UsernameExistsException {
+        if (usernameExist(user.getUsername())) {
+            throw new UsernameExistsException("There is an account with that email address: " + user.getUsername());
+        }
+
         UserDao newUser = new UserDao();
         newUser.setUsername(user.getUsername());
         newUser.setPassword(bcryptEncoder.encode(user.getPassword()));
         return userRepo.save(newUser);
+    }
+
+    private boolean usernameExist(String username) {
+        final UserDao user = userRepo.findByUsername(username);
+        return user != null;
     }
 }

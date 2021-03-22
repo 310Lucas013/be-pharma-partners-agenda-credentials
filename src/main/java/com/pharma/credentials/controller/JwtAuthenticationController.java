@@ -1,6 +1,8 @@
 package com.pharma.credentials.controller;
 
 import com.pharma.credentials.config.JwtTokenUtil;
+import com.pharma.credentials.exeptions.UsernameExistsException;
+import com.pharma.credentials.models.CodeVerifyRequest;
 import com.pharma.credentials.models.JwtRequest;
 import com.pharma.credentials.models.JwtResponse;
 import com.pharma.credentials.models.UserDto;
@@ -33,13 +35,28 @@ public class JwtAuthenticationController {
 
         final UserDetails userDetails = userDetailsService.loadUserByUsername(authenticationRequest.getUsername());
 
+
         final String token = jwtTokenUtil.generateToken(userDetails);
 
         return ResponseEntity.ok(new JwtResponse(token));
     }
 
+    @RequestMapping(value = "/verify", method = RequestMethod.POST)
+    public ResponseEntity<?> verifyCode(@RequestBody CodeVerifyRequest verifyRequest) throws Exception {
+        if(verifyRequest.getCode() == null && !verifyRequest.getCode().trim().isEmpty())
+        {
+            // no verification code exeption
+        }
+        final UserDetails userDetails = userDetailsService.loadUserByUsername(verifyRequest.getUsername());
+
+        final String token = jwtTokenUtil.generateToken(userDetails);
+        return ResponseEntity.ok(new JwtResponse(token));
+    }
+
+
+
     @RequestMapping(value = "/register", method = RequestMethod.POST)
-    public ResponseEntity<?> saveUser(@RequestBody UserDto user) throws Exception {
+    public ResponseEntity<?> saveUser(@RequestBody UserDto user) throws Exception, UsernameExistsException {
         return ResponseEntity.ok(userDetailsService.save(user));
     }
 

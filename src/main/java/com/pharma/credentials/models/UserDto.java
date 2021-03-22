@@ -3,6 +3,7 @@ package com.pharma.credentials.models;
 public class UserDto {
     private String username;
     private String password;
+    private String email;
 
     public UserDto(String username, String password) {
         this.username = username;
@@ -23,5 +24,13 @@ public class UserDto {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 }
