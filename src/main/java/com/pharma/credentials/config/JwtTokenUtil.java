@@ -1,7 +1,9 @@
 package com.pharma.credentials.config;
 
 import com.pharma.credentials.models.UserDao;
+import com.pharma.credentials.service.JwtUserDetailsService;
 import io.jsonwebtoken.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -20,12 +22,15 @@ public class JwtTokenUtil implements Serializable {
 
     private static final long serialVersionUID = -2550185165626007488L;
 
-    public static final long JWT_TOKEN_VALIDITY = 60 * 60 * 10;
+    public static final long JWT_TOKEN_VALIDITY = 1000 * 60; // one minute
 
     @Value("${jwt.secret}")
     private String secret;
 
     private String AUTHORITIES_KEY = "AUTHORITIES_KEY";
+
+    @Autowired
+    JwtUserDetailsService userDetailsService;
 
     public String getUsernameFromToken(String token) {
         return getClaimFromToken(token, Claims::getSubject);
@@ -69,8 +74,16 @@ public class JwtTokenUtil implements Serializable {
     }
 
     private String doGenerateToken(Map<String, Object> claims, String subject) {
+        Date expiryDate;
+        if (userDetailsService.findUserByUsername(subject).isAuthenticated()){
+            expiryDate = new Date(System.currentTimeMillis() + JWT_TOKEN_VALIDITY * 60 * 10); // 10 hours
+        } else {
+            expiryDate = new Date(System.currentTimeMillis() + JWT_TOKEN_VALIDITY * 5);
+        }
+
+
         return Jwts.builder().setClaims(claims).setSubject(subject).setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + JWT_TOKEN_VALIDITY * 1000)).signWith(SignatureAlgorithm.HS512, secret).compact();
+                .setExpiration(expiryDate).signWith(SignatureAlgorithm.HS512, secret).compact();
     }
 
     public Boolean canTokenBeRefreshed(String token) {
@@ -82,7 +95,7 @@ public class JwtTokenUtil implements Serializable {
         return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
     }
 
-    UsernamePasswordAuthenticationToken getAuthenticationToken(final String token, final Authentication existingAuth, final UserDetails userDetails) {
+    UsernamePasswordAuthenticationToken getAuthenticationToken(final String token, final UserDetails userDetails) {
 
         final JwtParser jwtParser = Jwts.parser().setSigningKey(secret);
 

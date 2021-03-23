@@ -22,7 +22,10 @@ public class UserDao {
     private String secret;
 
     @Column
-    private boolean isAuthenticated;
+    private boolean authenticated;
+
+    @Column
+    private boolean using2Fa;
 
     @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JoinTable(name = "USER_ROLES",
@@ -64,13 +67,21 @@ public class UserDao {
     public void setSecret(String secret) {
         this.secret = secret;
     }
-
+    
     public boolean isAuthenticated() {
-        return isAuthenticated;
+        return authenticated;
     }
 
     public void setAuthenticated(boolean authenticated) {
-        isAuthenticated = authenticated;
+        this.authenticated = authenticated;
+    }
+
+    public boolean isUsing2Fa() {
+        return using2Fa;
+    }
+
+    public void setUsing2Fa(boolean using2Fa) {
+        this.using2Fa = using2Fa;
     }
 
     @Override

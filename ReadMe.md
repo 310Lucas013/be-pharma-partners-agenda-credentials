@@ -1,10 +1,21 @@
 
+User registration
 /register
-register a user with username, password
+Post {username, password, using2Fa}
+return if using 2fa -> QRcode image data
+       else -> username is returned
 
-/authenticate 
-post user, password
-if correct then you will receive a JWT.
+User Login
+/authenticate
+Post {username, password}
+return Token (authenticated = false)
+
+User entered TOTP
+/verify
+Post {code}
+return Token (authenticated = true)
+
+
 
 /greeting
 if the JWT is valid you will receive a welcome message

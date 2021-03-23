@@ -4,6 +4,7 @@ import com.google.zxing.WriterException;
 import com.pharma.credentials.config.JwtTokenUtil;
 import com.pharma.credentials.models.Code;
 import com.pharma.credentials.models.UserDao;
+import com.pharma.credentials.models.UserDto;
 import com.pharma.credentials.service.JwtUserDetailsService;
 import dev.samstevens.totp.code.CodeVerifier;
 import dev.samstevens.totp.code.DefaultCodeGenerator;
@@ -20,6 +21,7 @@ import dev.samstevens.totp.time.TimeProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.UnknownHostException;
@@ -32,16 +34,12 @@ public class QRCodeController {
     @Autowired
     JwtUserDetailsService userDetailsService;
 
-    @Autowired
-    JwtTokenUtil jwtTokenUtil;
-
-
     @GetMapping(value = "/barcode")
     public String getbarcode(Principal user) throws WriterException, QrGenerationException {
         SecretGenerator secretGenerator = new DefaultSecretGenerator(64);
         String secret = secretGenerator.generate();
 
-        UserDao userDao = userDetailsService.findUserByUsername(user.getName());
+        UserDto userDao = userDetailsService.findUserByUsername(user.getName());
         userDao.setSecret(secret);
 
         userDetailsService.update(userDao);
@@ -69,14 +67,22 @@ public class QRCodeController {
 
     @RequestMapping(value = "/verify", method = RequestMethod.POST)
     public String verify(@RequestBody Code code, Principal user) throws UnknownHostException {
-        UserDao userDao = userDetailsService.findUserByUsername(user.getName());
+        UserDto userDto = userDetailsService.findUserByUsername(user.getName());
+
+        if (userDto == null)
+            throw new UsernameNotFoundException("Username not found : " + user.getName());
+
+        if(userDto.getSecret().isEmpty()){
+            return "generate qr code";
+        }
 
         TimeProvider timeProvider = new SystemTimeProvider();
         DefaultCodeGenerator codeGenerator = new DefaultCodeGenerator(HashingAlgorithm.SHA1, 6);
         CodeVerifier verifier = new DefaultCodeVerifier(codeGenerator, timeProvider);
 
-        if (verifier.isValidCode(userDao.getSecret(), code.getCode())) {
-            userDao.setAuthenticated(true);
+        if (verifier.isValidCode(userDto.getSecret(), code.getCode())) {
+            userDto.setAuthenticated(true);
+            userDetailsService.update(userDto);
             return "CORRECT CODE";
         }
 

@@ -1,19 +1,17 @@
 package com.pharma.credentials.service;
 
-import com.pharma.credentials.models.RoleDao;
 import com.pharma.credentials.models.UserDao;
 import com.pharma.credentials.models.UserDto;
 import com.pharma.credentials.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -33,7 +31,7 @@ public class JwtUserDetailsService implements UserDetailsService {
             throw new UsernameNotFoundException("User not found with username: " + username);
         }
 
-        return new org.springframework.security.core.userdetails.User(user.getUsername(), user.getPassword(), getAuthority(user));
+        return new User(user.getUsername(), user.getPassword(), getAuthority(user));
     }
 
     private Set getAuthority(UserDao user) {
@@ -48,15 +46,41 @@ public class JwtUserDetailsService implements UserDetailsService {
         UserDao newUser = new UserDao();
         newUser.setUsername(user.getUsername());
         newUser.setPassword(bcryptEncoder.encode(user.getPassword()));
+        newUser.setAuthenticated(false);
+        newUser.setSecret(user.getSecret());
+
+        if(user.isUsing2Fa()){
+            newUser.setUsing2Fa(true);
+        }else {
+            newUser.setUsing2Fa(false);
+        }
+
         return userRepo.save(newUser);
     }
 
-    public UserDao update(UserDao user){
-        return userRepo.save(user);
+    public UserDao update(UserDto user){
+        var updatedUser = userRepo.findByUsername(user.getUsername());
+
+        updatedUser.setAuthenticated(user.isAuthenticated());
+
+
+        return userRepo.save(updatedUser);
     }
 
-    public UserDao findUserByUsername(String user){
-        return userRepo.findByUsername(user);
+    public UserDto findUserByUsername(String user){
+        UserDao userDao = userRepo.findByUsername(user);
+
+        if (userDao == null) {
+            throw new UsernameNotFoundException("User not found with username: " + user);
+        }
+
+        UserDto newUser = new UserDto();
+        newUser.setUsername(user);
+        newUser.setAuthenticated(userDao.isAuthenticated());
+        newUser.setSecret(userDao.getSecret());
+        newUser.setUsing2Fa(userDao.isUsing2Fa());
+
+        return newUser;
     }
 }
 
