@@ -3,9 +3,13 @@ package com.pharma.credentials.controller;
 import com.pharma.credentials.config.JwtTokenUtil;
 import com.pharma.credentials.models.JwtRequest;
 import com.pharma.credentials.models.JwtResponse;
+import com.pharma.credentials.models.UserDao;
 import com.pharma.credentials.models.UserDto;
 import com.pharma.credentials.service.JwtUserDetailsService;
+import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -14,17 +18,35 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @RestController
-@CrossOrigin(origins = "http://localhost:4200")
+@CrossOrigin(origins = {"http://localhost:4201", "http://localhost:8080", "http://localhost:8081",
+        "http://localhost:8082", "http://localhost:8083", "http://localhost:8084", "http://localhost:8085",
+        "http://localhost:5672", "http://localhost:15672"})
 public class JwtAuthenticationController {
-    @Autowired
-    private AuthenticationManager authenticationManager;
+    private final AuthenticationManager authenticationManager;
 
-    @Autowired
-    private JwtTokenUtil jwtTokenUtil;
+    private final JwtTokenUtil jwtTokenUtil;
 
-    @Autowired
-    private JwtUserDetailsService userDetailsService;
+    private final JwtUserDetailsService userDetailsService;
+
+    private final AmqpTemplate rabbitTemplate;
+
+    @Value("${rabbitmq.exchange}")
+    private String exchange;
+    @Value("${rabbitmq.routingKey}")
+    private String routingkey;
+
+    public JwtAuthenticationController(AuthenticationManager authenticationManager,
+                                       JwtTokenUtil jwtTokenUtil, JwtUserDetailsService userDetailsService,
+                                       AmqpTemplate rabbitTemplate) {
+        this.authenticationManager = authenticationManager;
+        this.jwtTokenUtil = jwtTokenUtil;
+        this.userDetailsService = userDetailsService;
+        this.rabbitTemplate = rabbitTemplate;
+    }
 
     @RequestMapping(value = "/authenticate", method = RequestMethod.POST)
     public ResponseEntity<?> createAuthenticationToken(@RequestBody JwtRequest authenticationRequest) throws Exception {
@@ -52,4 +74,39 @@ public class JwtAuthenticationController {
             throw new Exception("INVALID_CREDENTIALS", e);
         }
     }
+
+    @RequestMapping(value = "/all", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity getAllUsers() {
+        List<UserDao> ls = userDetailsService.getAll();
+
+        rabbitTemplate.convertAndSend(exchange, routingkey, ls);
+        return ResponseEntity.ok(ls);
+    }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
