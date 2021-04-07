@@ -22,9 +22,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 @RestController
-@CrossOrigin(origins = {"http://localhost:4201", "http://localhost:8080", "http://localhost:8081",
-        "http://localhost:8082", "http://localhost:8083", "http://localhost:8084", "http://localhost:8085",
-        "http://localhost:5672", "http://localhost:15672"})
 public class JwtAuthenticationController {
     private final AuthenticationManager authenticationManager;
 
