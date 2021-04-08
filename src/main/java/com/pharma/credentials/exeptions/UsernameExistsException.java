@@ -1,7 +1,7 @@
 package com.pharma.credentials.exeptions;
 
-public class UsernameExistsException extends Throwable {
-    public UsernameExistsException(final String message) {
-        super(message);
+public class UsernameExistsException extends RuntimeException  {
+    public UsernameExistsException(String s) {
+        super(s);
     }
 }
