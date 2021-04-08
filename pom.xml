@@ -64,7 +64,11 @@
             <version>9.2.1.jre15</version>
         </dependency>
 
-    </dependencies>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-mail</artifactId>
+		</dependency>
+	</dependencies>
 
     <build>
         <plugins>
