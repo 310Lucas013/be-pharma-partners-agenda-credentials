@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @RestController
+@RequestMapping("/credentials")
 public class JwtAuthenticationController {
     private final AuthenticationManager authenticationManager;
 
