@@ -145,5 +145,5 @@ public class JwtAuthenticationController {
         }
 
         throw new Exception("code not correct");
-    }
+        }
 }
