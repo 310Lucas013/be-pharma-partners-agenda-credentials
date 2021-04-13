@@ -6,7 +6,6 @@ public class UserDto {
     private boolean using2Fa;
     private String secret;
     private boolean authenticated;
-    private String email;
 
     public UserDto(String username, String password) {
         this.username = username;
@@ -66,13 +65,5 @@ public class UserDto {
                 ", secret='" + secret + '\'' +
                 ", authenticated=" + authenticated +
                 '}';
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
     }
 }
