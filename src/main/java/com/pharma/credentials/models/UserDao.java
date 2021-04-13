@@ -36,6 +36,10 @@ public class UserDao {
                     @JoinColumn(name = "ROLE_ID") })
     private Set<RoleDao> roles;
 
+    public long getId() {
+        return id;
+    }
+
     public String getUsername() {
         return username;
     }
