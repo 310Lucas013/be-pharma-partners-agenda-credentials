@@ -9,11 +9,11 @@ pipeline {
             bat 'mvn test'
         }
       }
-//       stage('SonarQube analysis') {
-//         steps {
-//             bat 'mvn clean package sonar:sonar -Dsonar.login=2d21b6ecb01a7f36703ca2eac4f04729c17f2b03'
-//         }
-//       }
+      stage('SonarQube analysis') {
+        steps {
+            bat 'mvn clean package sonar:sonar -Dsonar.login=27ab6dc53812c5be56c778401a32443bc0614c11'
+        }
+      }
       stage('Deployment') {
         when {
             branch 'master'
