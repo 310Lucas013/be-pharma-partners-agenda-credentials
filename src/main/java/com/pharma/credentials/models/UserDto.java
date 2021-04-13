@@ -3,7 +3,6 @@ package com.pharma.credentials.models;
 public class UserDto {
     private String username;
     private String password;
-    private String email;
     private boolean using2Fa;
     private String secret;
     private boolean authenticated;
@@ -33,12 +32,6 @@ public class UserDto {
         this.password = password;
     }
 
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
     public boolean isUsing2Fa() {
         return using2Fa;
     }

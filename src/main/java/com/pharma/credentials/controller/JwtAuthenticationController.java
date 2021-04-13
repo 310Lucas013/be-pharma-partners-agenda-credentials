@@ -16,8 +16,10 @@ import dev.samstevens.totp.secret.SecretGenerator;
 import dev.samstevens.totp.time.SystemTimeProvider;
 import dev.samstevens.totp.time.TimeProvider;
 import jdk.jshell.spi.ExecutionControl;
+import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -69,14 +71,14 @@ public class JwtAuthenticationController {
         authenticate(authenticationRequest.getUsername(), authenticationRequest.getPassword());
 
         final UserDetails userDetails = userDetailsService.loadUserByUsername(authenticationRequest.getUsername());
-        if(userDetailsService.findUserByUsername(userDetails.getUsername()) == null)
+        if (userDetailsService.findUserByUsername(userDetails.getUsername()) == null)
             throw new UsernameNotFoundException("Username not found : " + userDetails.getUsername());
 
         final UserDto user = userDetailsService.findUserByUsername(userDetails.getUsername());
 
-        if(!user.isUsing2Fa()){
+        if (!user.isUsing2Fa()) {
             user.setAuthenticated(true);
-        }else{
+        } else {
             user.setAuthenticated(false);
         }
         userDetailsService.update(user);
@@ -85,28 +87,22 @@ public class JwtAuthenticationController {
         return ResponseEntity.ok(new JwtResponse(token));
     }
 
-    @RequestMapping(value = "/verify", method = RequestMethod.POST)
-    public ResponseEntity<?> verifyCode(@RequestBody CodeVerifyRequest verifyRequest) throws Exception {
-        if(verifyRequest.getCode() == null && !verifyRequest.getCode().trim().isEmpty())
-        {
-            // no verification code exeption
+    private void authenticate(String username, String password) throws Exception {
+        try {
+            authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
+        } catch (DisabledException e) {
+            throw new Exception("USER_DISABLED", e);
+        } catch (BadCredentialsException e) {
+            throw new Exception("INVALID_CREDENTIALS", e);
         }
-        final UserDetails userDetails = userDetailsService.loadUserByUsername(verifyRequest.getUsername());
-
-        final String token = jwtTokenUtil.generateToken(userDetails);
-        return ResponseEntity.ok(new JwtResponse(token));
     }
-
-
 
     @RequestMapping(value = "/register", method = RequestMethod.POST)
     public ResponseEntity<?> saveUser(@RequestBody UserDto user) throws Exception {
-        // check if username exist
-
         user.setAuthenticated(false);
 
         // generate qr code
-        if(user.isUsing2Fa()){
+        if (user.isUsing2Fa()) {
             SecretGenerator secretGenerator = new DefaultSecretGenerator(64);
             String secret = secretGenerator.generate();
             user.setSecret(secret);
@@ -136,16 +132,6 @@ public class JwtAuthenticationController {
         return ResponseEntity.ok(userDetailsService.save(user));
     }
 
-    private void authenticate(String username, String password) throws Exception {
-        try {
-            authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
-        } catch (DisabledException e) {
-            throw new Exception("USER_DISABLED", e);
-        } catch (BadCredentialsException e) {
-            throw new Exception("INVALID_CREDENTIALS", e);
-        }
-    }
-
     @RequestMapping(value = "/all", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity getAllUsers() {
         List<UserDao> ls = userDetailsService.getAll();
@@ -153,19 +139,19 @@ public class JwtAuthenticationController {
         rabbitTemplate.convertAndSend(exchange, routingkey, ls);
         return ResponseEntity.ok(ls);
     }
-    
+
     @RequestMapping(value = "/verify", method = RequestMethod.POST)
     public ResponseEntity<?> verify(@RequestBody Code code, Principal user) throws Exception {
         System.out.println("verify");
         UserDto userDto = userDetailsService.findUserByUsername(user.getName());
         final UserDetails userDetails = userDetailsService.loadUserByUsername(user.getName());
-        if(userDetailsService.findUserByUsername(userDetails.getUsername()) == null)
+        if (userDetailsService.findUserByUsername(userDetails.getUsername()) == null)
             throw new UsernameNotFoundException("Username not found : " + userDetails.getUsername());
 
         if (userDto == null)
             throw new UsernameNotFoundException("Username not found : " + user.getName());
 
-        if(userDto.getSecret().isEmpty()){
+        if (userDto.getSecret().isEmpty()) {
             throw new Exception("code not found");
         }
 
@@ -179,9 +165,8 @@ public class JwtAuthenticationController {
             final String token = jwtTokenUtil.generateToken(userDetails);
             return ResponseEntity.ok(new JwtResponse(token));
         }
-
         throw new Exception("code not correct");
-        }
+    }
 }
 
 

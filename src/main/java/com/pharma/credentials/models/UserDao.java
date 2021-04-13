@@ -16,13 +16,6 @@ public class UserDao {
     @Column
     @JsonIgnore
     private String password;
-    @Column
-    private String email;
-    @Column
-    private boolean enabled;
-
-    public UserDao() {
-    }
 
     @Column
     @JsonIgnore
@@ -59,20 +52,6 @@ public class UserDao {
         this.password = password;
     }
 
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public boolean isEnabled() {
-        return enabled;
-    }
-
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
     public Set<RoleDao> getRoles() {
         return roles;
     }
@@ -88,7 +67,7 @@ public class UserDao {
     public void setSecret(String secret) {
         this.secret = secret;
     }
-    
+
     public boolean isAuthenticated() {
         return authenticated;
     }

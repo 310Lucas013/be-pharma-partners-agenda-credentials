@@ -45,6 +45,10 @@ public class JwtUserDetailsService implements UserDetailsService {
         return authorities;
     }
 
+    public List<UserDao> getAll() {
+        return userRepo.findAll();
+    }
+
     public UserDao save(UserDto user) throws UsernameExistsException {
         if (usernameExist(user.getUsername())) {
             throw new UsernameExistsException("There is an account with that email address: " + user.getUsername());
@@ -63,6 +67,11 @@ public class JwtUserDetailsService implements UserDetailsService {
         }
 
         return userRepo.save(newUser);
+    }
+
+    private boolean usernameExist(String username) {
+        final UserDao user = userRepo.findByUsername(username);
+        return user != null;
     }
 
     public UserDao update(UserDto user){
