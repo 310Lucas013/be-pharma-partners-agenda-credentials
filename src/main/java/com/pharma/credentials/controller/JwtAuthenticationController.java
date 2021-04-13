@@ -1,7 +1,8 @@
 package com.pharma.credentials.controller;
 
+import com.google.gson.Gson;
 import com.pharma.credentials.config.JwtTokenUtil;
-import com.pharma.credentials.exeptions.UsernameExistsException;
+import com.pharma.credentials.messaging.messages.CreateEmployeeMessage;
 import com.pharma.credentials.models.*;
 import com.pharma.credentials.service.JwtUserDetailsService;
 import dev.samstevens.totp.code.CodeVerifier;
@@ -15,9 +16,7 @@ import dev.samstevens.totp.secret.DefaultSecretGenerator;
 import dev.samstevens.totp.secret.SecretGenerator;
 import dev.samstevens.totp.time.SystemTimeProvider;
 import dev.samstevens.totp.time.TimeProvider;
-import jdk.jshell.spi.ExecutionControl;
 import org.springframework.amqp.core.AmqpTemplate;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -29,7 +28,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.security.Principal;
 
@@ -46,6 +44,8 @@ public class JwtAuthenticationController {
 
     private final AmqpTemplate rabbitTemplate;
 
+    private final Gson gson;
+
     @Value("${rabbitmq.exchange}")
     private String exchange;
     @Value("${rabbitmq.routingKey}")
@@ -53,11 +53,12 @@ public class JwtAuthenticationController {
 
     public JwtAuthenticationController(AuthenticationManager authenticationManager,
                                        JwtTokenUtil jwtTokenUtil, JwtUserDetailsService userDetailsService,
-                                       AmqpTemplate rabbitTemplate) {
+                                       AmqpTemplate rabbitTemplate, Gson gson) {
         this.authenticationManager = authenticationManager;
         this.jwtTokenUtil = jwtTokenUtil;
         this.userDetailsService = userDetailsService;
         this.rabbitTemplate = rabbitTemplate;
+        this.gson = gson;
     }
 
     @Value("${qrcode.label}")
@@ -124,12 +125,18 @@ public class JwtAuthenticationController {
                     generator.generate(data),
                     generator.getImageMimeType()
             );
-            userDetailsService.save(user);
+
+            // Send Create Employee Message with RabbitMQ
+            createEmployee(userDetailsService.save(user));
 
             return ResponseEntity.ok(qrCodeImage);
         }
+        UserDao savedUser = userDetailsService.save(user);
 
-        return ResponseEntity.ok(userDetailsService.save(user));
+        // Send Create Employee Message with RabbitMQ
+        createEmployee(savedUser);
+
+        return ResponseEntity.ok(savedUser);
     }
 
     @RequestMapping(value = "/all", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
@@ -166,6 +173,13 @@ public class JwtAuthenticationController {
             return ResponseEntity.ok(new JwtResponse(token));
         }
         throw new Exception("code not correct");
+    }
+
+    private void createEmployee(UserDao userDao){
+        CreateEmployeeMessage message = new CreateEmployeeMessage();
+        message.setName(userDao.getUsername());
+        message.setId(userDao.getId());
+        rabbitTemplate.convertAndSend(exchange, "create-employee", gson.toJson(message));
     }
 }
 
