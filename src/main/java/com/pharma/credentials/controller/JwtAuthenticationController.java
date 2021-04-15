@@ -18,6 +18,7 @@ import dev.samstevens.totp.time.SystemTimeProvider;
 import dev.samstevens.totp.time.TimeProvider;
 import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -72,8 +73,9 @@ public class JwtAuthenticationController {
         authenticate(authenticationRequest.getUsername(), authenticationRequest.getPassword());
 
         final UserDetails userDetails = userDetailsService.loadUserByUsername(authenticationRequest.getUsername());
-        if (userDetailsService.findUserByUsername(userDetails.getUsername()) == null)
-            throw new UsernameNotFoundException("Username not found : " + userDetails.getUsername());
+        if (userDetailsService.findUserByUsername(userDetails.getUsername()) == null) {
+            return new ResponseEntity<>(new UsernameNotFoundException("Username not found : " + userDetails.getUsername()), HttpStatus.BAD_REQUEST);
+        }
 
         final UserDto user = userDetailsService.findUserByUsername(userDetails.getUsername());
 
