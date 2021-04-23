@@ -70,6 +70,7 @@ public class JwtAuthenticationController {
 
     @RequestMapping(value = "/authenticate", method = RequestMethod.POST)
     public ResponseEntity<?> createAuthenticationToken(@RequestBody JwtRequest authenticationRequest) throws Exception {
+        System.out.println("authenticate reached");
         authenticate(authenticationRequest.getUsername(), authenticationRequest.getPassword());
 
         final UserDetails userDetails = userDetailsService.loadUserByUsername(authenticationRequest.getUsername());
@@ -142,7 +143,7 @@ public class JwtAuthenticationController {
     }
 
     @RequestMapping(value = "/all", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity getAllUsers() {
+    public ResponseEntity<?> getAllUsers() {
         List<UserDao> ls = userDetailsService.getAll();
 
         rabbitTemplate.convertAndSend(exchange, routingkey, ls);
@@ -177,7 +178,7 @@ public class JwtAuthenticationController {
         throw new Exception("code not correct");
     }
 
-    private void createEmployee(UserDao userDao){
+    private void createEmployee(UserDao userDao) {
         CreateEmployeeMessage message = new CreateEmployeeMessage();
         message.setName(userDao.getUsername());
         message.setId(userDao.getId());
