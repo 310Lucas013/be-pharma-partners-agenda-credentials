@@ -82,5 +82,9 @@ public class JwtUserDetailsService implements UserDetailsService {
 
         return newUser;
     }
+
+    public Long findUserIdByName(String name) {
+        return userRepo.findByUsername(name).getId();
+    }
 }
 

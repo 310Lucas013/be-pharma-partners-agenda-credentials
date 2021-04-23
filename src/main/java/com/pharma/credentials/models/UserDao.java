@@ -84,6 +84,10 @@ public class UserDao {
         this.using2Fa = using2Fa;
     }
 
+    public long getId() {
+        return id;
+    }
+
     @Override
     public String toString() {
         return "UserDao{" +

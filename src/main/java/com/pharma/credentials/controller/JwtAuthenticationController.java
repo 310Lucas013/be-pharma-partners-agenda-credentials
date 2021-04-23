@@ -1,7 +1,6 @@
 package com.pharma.credentials.controller;
 
 import com.pharma.credentials.config.JwtTokenUtil;
-import com.pharma.credentials.exeptions.UsernameExistsException;
 import com.pharma.credentials.models.*;
 import com.pharma.credentials.service.JwtUserDetailsService;
 import dev.samstevens.totp.code.CodeVerifier;
@@ -15,7 +14,6 @@ import dev.samstevens.totp.secret.DefaultSecretGenerator;
 import dev.samstevens.totp.secret.SecretGenerator;
 import dev.samstevens.totp.time.SystemTimeProvider;
 import dev.samstevens.totp.time.TimeProvider;
-import jdk.jshell.spi.ExecutionControl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -51,22 +49,23 @@ public class JwtAuthenticationController {
 
     @RequestMapping(value = "/authenticate", method = RequestMethod.POST)
     public ResponseEntity<?> createAuthenticationToken(@RequestBody JwtRequest authenticationRequest) throws Exception {
+        System.out.println("authenticate");
         authenticate(authenticationRequest.getUsername(), authenticationRequest.getPassword());
 
         final UserDetails userDetails = userDetailsService.loadUserByUsername(authenticationRequest.getUsername());
-        if(userDetailsService.findUserByUsername(userDetails.getUsername()) == null)
+        if (userDetailsService.findUserByUsername(userDetails.getUsername()) == null)
             throw new UsernameNotFoundException("Username not found : " + userDetails.getUsername());
 
         final UserDto user = userDetailsService.findUserByUsername(userDetails.getUsername());
 
-        if(!user.isUsing2Fa()){
+        if (!user.isUsing2Fa()) {
             user.setAuthenticated(true);
-        }else{
+        } else {
             user.setAuthenticated(false);
         }
         userDetailsService.update(user);
 
-        final String token = jwtTokenUtil.generateToken(userDetails);
+        final String token = jwtTokenUtil.generateToken(userDetails, userDetailsService.findUserIdByName(user.getUsername()).toString());
         return ResponseEntity.ok(new JwtResponse(token));
     }
 
@@ -78,7 +77,7 @@ public class JwtAuthenticationController {
         user.setAuthenticated(false);
 
         // generate qr code
-        if(user.isUsing2Fa()){
+        if (user.isUsing2Fa()) {
             SecretGenerator secretGenerator = new DefaultSecretGenerator(64);
             String secret = secretGenerator.generate();
             user.setSecret(secret);
@@ -123,13 +122,13 @@ public class JwtAuthenticationController {
         System.out.println("verify");
         UserDto userDto = userDetailsService.findUserByUsername(user.getName());
         final UserDetails userDetails = userDetailsService.loadUserByUsername(user.getName());
-        if(userDetailsService.findUserByUsername(userDetails.getUsername()) == null)
+        if (userDetailsService.findUserByUsername(userDetails.getUsername()) == null)
             throw new UsernameNotFoundException("Username not found : " + userDetails.getUsername());
 
         if (userDto == null)
             throw new UsernameNotFoundException("Username not found : " + user.getName());
 
-        if(userDto.getSecret().isEmpty()){
+        if (userDto.getSecret().isEmpty()) {
             throw new Exception("code not found");
         }
 
@@ -140,10 +139,10 @@ public class JwtAuthenticationController {
         if (verifier.isValidCode(userDto.getSecret(), code.getCode())) {
             userDto.setAuthenticated(true);
             userDetailsService.update(userDto);
-            final String token = jwtTokenUtil.generateToken(userDetails);
+            final String token = jwtTokenUtil.generateToken(userDetails, userDetailsService.findUserIdByName(userDto.getUsername()).toString());
             return ResponseEntity.ok(new JwtResponse(token));
         }
 
         throw new Exception("code not correct");
-        }
+    }
 }

@@ -63,17 +63,17 @@ public class JwtTokenUtil implements Serializable {
         return false;
     }
 
-    public String generateToken(UserDetails userDetails) {
+    public String generateToken(UserDetails userDetails, String id) {
         Map<String, Object> claims;
 
         claims = userDetails.getAuthorities().stream().collect(
                 Collectors.toMap(x -> x.getAuthority(),
                         x -> x.getAuthority()));
 
-        return doGenerateToken(claims, userDetails.getUsername());
+        return doGenerateToken(claims, userDetails.getUsername(), id);
     }
 
-    private String doGenerateToken(Map<String, Object> claims, String subject) {
+    private String doGenerateToken(Map<String, Object> claims, String subject, String id) {
         Date expiryDate;
         if (userDetailsService.findUserByUsername(subject).isAuthenticated()){
             expiryDate = new Date(System.currentTimeMillis() + JWT_TOKEN_VALIDITY * 60 * 10); // 10 hours
@@ -82,7 +82,7 @@ public class JwtTokenUtil implements Serializable {
         }
 
 
-        return Jwts.builder().setClaims(claims).setSubject(subject).setIssuedAt(new Date(System.currentTimeMillis()))
+        return Jwts.builder().setClaims(claims).setSubject(subject).setId(id).setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(expiryDate).signWith(SignatureAlgorithm.HS512, secret).compact();
     }
 
