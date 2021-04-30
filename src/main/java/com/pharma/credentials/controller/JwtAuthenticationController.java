@@ -87,7 +87,7 @@ public class JwtAuthenticationController {
         }
         userDetailsService.update(user);
 
-        final String token = jwtTokenUtil.generateToken(userDetails);
+        final String token = jwtTokenUtil.generateToken(userDetails, userDetailsService.findUserIdByUsername(user.getUsername()));
         return ResponseEntity.ok(new JwtResponse(token));
     }
 
@@ -172,7 +172,7 @@ public class JwtAuthenticationController {
         if (verifier.isValidCode(userDto.getSecret(), code.getCode())) {
             userDto.setAuthenticated(true);
             userDetailsService.update(userDto);
-            final String token = jwtTokenUtil.generateToken(userDetails);
+            final String token = jwtTokenUtil.generateToken(userDetails, userDetailsService.findUserIdByUsername(userDto.getUsername()));
             return ResponseEntity.ok(new JwtResponse(token));
         }
         throw new Exception("code not correct");

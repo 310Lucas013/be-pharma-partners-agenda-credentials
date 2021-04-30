@@ -60,9 +60,9 @@ public class JwtUserDetailsService implements UserDetailsService {
         newUser.setAuthenticated(false);
         newUser.setSecret(user.getSecret());
 
-        if(user.isUsing2Fa()){
+        if (user.isUsing2Fa()) {
             newUser.setUsing2Fa(true);
-        }else {
+        } else {
             newUser.setUsing2Fa(false);
         }
 
@@ -74,7 +74,7 @@ public class JwtUserDetailsService implements UserDetailsService {
         return user != null;
     }
 
-    public UserDao update(UserDto user){
+    public UserDao update(UserDto user) {
         var updatedUser = userRepo.findByUsername(user.getUsername());
 
         updatedUser.setAuthenticated(user.isAuthenticated());
@@ -83,7 +83,7 @@ public class JwtUserDetailsService implements UserDetailsService {
         return userRepo.save(updatedUser);
     }
 
-    public UserDto findUserByUsername(String user){
+    public UserDto findUserByUsername(String user) {
         UserDao userDao = userRepo.findByUsername(user);
 
         if (userDao == null) {
@@ -97,6 +97,10 @@ public class JwtUserDetailsService implements UserDetailsService {
         newUser.setUsing2Fa(userDao.isUsing2Fa());
 
         return newUser;
+    }
+
+    public String findUserIdByUsername(String username) {
+        return String.valueOf(userRepo.findByUsername(username).getId());
     }
 }
 
