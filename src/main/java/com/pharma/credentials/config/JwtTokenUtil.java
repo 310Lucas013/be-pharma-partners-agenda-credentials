@@ -1,5 +1,6 @@
 package com.pharma.credentials.config;
 
+import com.pharma.credentials.models.RoleDao;
 import com.pharma.credentials.models.UserDao;
 import com.pharma.credentials.service.JwtUserDetailsService;
 import io.jsonwebtoken.*;
@@ -81,8 +82,7 @@ public class JwtTokenUtil implements Serializable {
             expiryDate = new Date(System.currentTimeMillis() + JWT_TOKEN_VALIDITY * 5);
         }
 
-
-        return Jwts.builder().setClaims(claims).setSubject(subject).setId(id).setIssuedAt(new Date(System.currentTimeMillis()))
+        return Jwts.builder().setClaims(claims).setSubject(subject).setId(id).setIssuedAt(new Date(System.currentTimeMillis())).claim("role", "ARTS")
                 .setExpiration(expiryDate).signWith(SignatureAlgorithm.HS512, secret).compact();
     }
 
